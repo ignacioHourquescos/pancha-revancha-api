@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const ItemController = require("../controllers/Item");
+const ItemController = require("../controllers/item");
 
 //prettier-ignore
 router.post("/", ItemController.createItem);
