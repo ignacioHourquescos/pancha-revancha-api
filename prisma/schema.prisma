@@ -31,6 +31,10 @@ model Item {
   reserved       Boolean
   sold           Boolean
   images         String[]
+  color          String?
+  imageUrl       String?
+  imageUrls      String[]
+  price          Float
 }
 
 model Owner {
