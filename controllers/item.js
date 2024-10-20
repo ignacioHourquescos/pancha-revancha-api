@@ -24,12 +24,14 @@ class ItemController {
 				name,
 				description,
 				ownerId,
+
 				price,
 				size,
 				imageUrl,
 				sold,
 				reserved,
 				imageUrls,
+				brand,
 			} = req.body;
 
 			// Create item in database
@@ -38,6 +40,7 @@ class ItemController {
 					normalizedSize: parseInt(normalizedSize),
 					name,
 					description,
+
 					ownerId: parseInt(ownerId),
 					price: parseFloat(price),
 					size,
@@ -45,6 +48,7 @@ class ItemController {
 					reserved,
 					sold,
 					imageUrls,
+					brand,
 				},
 			});
 
@@ -63,16 +67,6 @@ class ItemController {
 			const items = await prisma.item.findMany({
 				take: Number(limit),
 				skip: Number(skip),
-				include: {
-					owner: {
-						select: {
-							name: true,
-							phoneNumber: true,
-							email: true,
-							balance: true,
-						},
-					},
-				},
 			});
 
 			const total = await prisma.item.count();

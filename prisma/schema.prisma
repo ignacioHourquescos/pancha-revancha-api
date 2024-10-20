@@ -27,7 +27,6 @@ model Item {
   size           String
   normalizedSize Int
   ownerId        Int
-  owner          Owner    @relation(fields: [ownerId], references: [id])
   reserved       Boolean
   sold           Boolean
   images         String[]
@@ -35,6 +34,7 @@ model Item {
   imageUrl       String?
   imageUrls      String[]
   price          Float
+  brand          String?
 }
 
 model Owner {
@@ -43,7 +43,7 @@ model Owner {
   phoneNumber  String
   email        String  @unique
   balance      Float
-  items        Item[]
+
 }
 
 //puerto 3452
