@@ -18,44 +18,36 @@ const upload = multer({
 class ItemController {
 	async createItem(req, res) {
 		try {
-			console.log("Request body:", req.body);
-			const {
-				normalizedSize,
-				name,
-				description,
-				ownerId,
+			const { userName, userPhone, ...itemData } = req.body;
 
-				price,
-				size,
-				imageUrl,
-				sold,
-				reserved,
-				imageUrls,
-				brand,
-			} = req.body;
+			// Find or create user
+			let user = await prisma.owner.findFirst({
+				where: { name: userName, phoneNumber: userPhone },
+			});
+			console.log("USER", user);
 
-			// Create item in database
+			if (!user) {
+				user = await prisma.owner.create({
+					data: {
+						name: userName,
+						phoneNumber: userPhone,
+					},
+				});
+			}
+
+			// Create item
 			const newItem = await prisma.item.create({
 				data: {
-					normalizedSize: parseInt(normalizedSize),
-					name,
-					description,
+					...itemData,
 
-					ownerId: parseInt(ownerId),
-					price: parseFloat(price),
-					size,
-					imageUrl,
-					reserved,
-					sold,
-					imageUrls,
-					brand,
+					ownerId: user.id,
 				},
 			});
 
 			res.status(201).json(newItem);
 		} catch (error) {
 			console.error("Error creating item:", error);
-			res.status(500).json({ error: error.message });
+			res.status(500).json({ error: "Failed to create item" });
 		}
 	}
 
@@ -82,6 +74,26 @@ class ItemController {
 			res
 				.status(500)
 				.json({ error: "Error al obtener los items", details: error.message });
+		}
+	}
+
+	async like_item(req, res) {
+		const { itemId } = req.params;
+		try {
+			const item = await prisma.item.update({
+				where: {
+					id: Number(itemId),
+				},
+				data: {
+					likes: {
+						increment: 1,
+					},
+				},
+			});
+			res.status(200).json(item);
+		} catch (error) {
+			console.error("Error liking item:", error);
+			res.status(500).json({ error: "Failed to like item" });
 		}
 	}
 }
