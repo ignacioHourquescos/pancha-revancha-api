@@ -26,6 +26,7 @@ model Item {
   description    String?
   normalizedSize Int?
   reserved       Boolean?
+  published      Boolean?
   size           String?
   sold           Boolean?
   ownerId        Int
@@ -33,6 +34,7 @@ model Item {
   price          Float?
   imageUrls      String[]
   brand          String?
+  type           String?
   likes          Int?  @default(0)
   owner          Owner    @relation(fields: [ownerId], references: [id])
 }
