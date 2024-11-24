@@ -3,16 +3,14 @@ const prisma = new PrismaClient();
 
 class OwnerController {
 	async createOwner(req, res) {
-		const { name, phoneNumber, email, balance } = req.body;
-		console.log("Received owner data:", { name, phoneNumber, email, balance });
+		const { name, phoneNumber } = req.body;
+		console.log("Received owner data:", { name, phoneNumber });
 
 		try {
 			const newOwner = await prisma.owner.create({
 				data: {
 					name,
 					phoneNumber,
-					email,
-					balance: parseFloat(balance),
 				},
 			});
 
@@ -30,6 +28,30 @@ class OwnerController {
 					.status(500)
 					.json({ error: "Error al crear el dueño", details: error.message });
 			}
+		}
+	}
+
+	async getOwnerByPhone(req, res) {
+		const { phoneNumber } = req.params;
+
+		try {
+			const owner = await prisma.owner.findFirst({
+				where: {
+					phoneNumber: phoneNumber,
+				},
+			});
+
+			if (!owner) {
+				return res.status(200).json(null);
+			}
+
+			return res.status(200).json(owner);
+		} catch (error) {
+			console.error("Error details:", error);
+			res.status(500).json({
+				error: "Error al buscar el dueño",
+				details: error.message,
+			});
 		}
 	}
 
