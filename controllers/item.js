@@ -30,6 +30,7 @@ class ItemController {
 				sold,
 				reserved,
 				imageUrls,
+				brand,
 			} = req.body;
 
 			// Create item in database
@@ -45,6 +46,7 @@ class ItemController {
 					reserved,
 					sold,
 					imageUrls,
+					brand,
 				},
 			});
 
@@ -68,8 +70,6 @@ class ItemController {
 						select: {
 							name: true,
 							phoneNumber: true,
-							email: true,
-							balance: true,
 						},
 					},
 				},
