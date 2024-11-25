@@ -47,7 +47,7 @@ class ItemController {
 					sold,
 					imageUrls,
 					brand,
-					color: rgb(188, 167, 179),
+					color: "rgb(188, 167, 179)",
 				},
 			});
 
