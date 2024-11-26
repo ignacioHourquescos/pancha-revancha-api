@@ -31,6 +31,7 @@ class ItemController {
 				reserved,
 				imageUrls,
 				brand,
+				color,
 			} = req.body;
 
 			// Create item in database
@@ -47,6 +48,7 @@ class ItemController {
 					sold,
 					imageUrls,
 					brand,
+					color,
 				},
 			});
 
