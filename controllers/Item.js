@@ -31,6 +31,7 @@ class ItemController {
 				reserved,
 				imageUrls,
 				brand,
+				color,
 			} = req.body;
 
 			// Create item in database
@@ -48,7 +49,7 @@ class ItemController {
 					imageUrls,
 					brand,
 					published: true,
-					color: "rgb(188, 167, 179)",
+					color,
 				},
 			});
 
