@@ -65,10 +65,13 @@ class ItemController {
 		console.log("ownerid", ownerId);
 
 		try {
+			const where = {};
+			if (ownerId) {
+				where.ownerId = Number(ownerId);
+			}
+
 			const items = await prisma.item.findMany({
-				where: {
-					ownerId: ownerId ? Number(ownerId) : undefined, // Make sure we're converting to Number
-				},
+				where,
 				take: Number(limit),
 				skip: Number(skip),
 				include: {
@@ -81,11 +84,7 @@ class ItemController {
 				},
 			});
 
-			const total = await prisma.item.count({
-				where: {
-					ownerId: ownerId ? Number(ownerId) : undefined,
-				},
-			});
+			const total = await prisma.item.count({ where });
 
 			res.json({
 				items,
