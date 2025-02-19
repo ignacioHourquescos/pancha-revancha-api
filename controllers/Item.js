@@ -61,11 +61,16 @@ class ItemController {
 	async getItems(req, res) {
 		const { page = 1, limit = 100, ownerId } = req.query;
 		const skip = (page - 1) * limit;
-		console.log("ownerId:", ownerId);
+		console.log("ownerId:", ownerId); // Log the ownerId for debugging
 
 		try {
+			const where = {}; // Ensure where is defined here
+			if (ownerId) {
+				where.ownerId = Number(ownerId); // Convert ownerId to a number
+			}
+
 			const items = await prisma.item.findMany({
-				where,
+				where, // Use the where object here
 				take: Number(limit),
 				skip: Number(skip),
 				include: {
@@ -78,7 +83,7 @@ class ItemController {
 				},
 			});
 
-			const total = await prisma.item.count({ where });
+			const total = await prisma.item.count({ where }); // Use the where object here
 
 			res.json({
 				items,
