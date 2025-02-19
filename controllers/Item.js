@@ -48,8 +48,6 @@ class ItemController {
 					sold,
 					imageUrls,
 					brand,
-					published: true,
-					color,
 				},
 			});
 
@@ -63,11 +61,9 @@ class ItemController {
 	async getItems(req, res) {
 		const { page = 1, limit = 100, ownerId } = req.query;
 		const skip = (page - 1) * limit;
+		console.log("ownerid", ownerId);
 
 		try {
-			// Create the where clause conditionally
-			const where = ownerId ? { ownerId: Number(ownerId) } : {};
-
 			const items = await prisma.item.findMany({
 				where,
 				take: Number(limit),
@@ -82,7 +78,7 @@ class ItemController {
 				},
 			});
 
-			const total = await prisma.item.count();
+			const total = await prisma.item.count({ where });
 
 			res.json({
 				items,
