@@ -98,6 +98,62 @@ class ItemController {
 				.json({ error: "Error al obtener los items", details: error.message });
 		}
 	}
+
+	async updateItemsBatch(req, res) {
+		try {
+			const { changes } = req.body;
+
+			// Process each item's changes
+			const updates = Object.entries(changes).map(
+				async ([itemId, itemChanges]) => {
+					// No need to convert to snake_case, keep camelCase for Prisma
+					const processedChanges = Object.entries(itemChanges).reduce(
+						(acc, [field, value]) => {
+							// Convert any string numbers to actual numbers for number fields
+							if (field === "normalizedSize" || field === "price") {
+								acc[field] = Number(value);
+							} else {
+								acc[field] = value;
+							}
+							return acc;
+						},
+						{}
+					);
+
+					// Update the item in the database
+					return prisma.item.update({
+						where: { id: parseInt(itemId) },
+						data: processedChanges,
+					});
+				}
+			);
+
+			// Wait for all updates to complete
+			await Promise.all(updates);
+
+			res.json({ message: "Items updated successfully" });
+		} catch (error) {
+			console.error("Error updating items in batch:", error);
+			res.status(500).json({ error: error.message });
+		}
+	}
+
+	async deleteItem(req, res) {
+		try {
+			const { id } = req.params;
+
+			await prisma.item.delete({
+				where: {
+					id: parseInt(id),
+				},
+			});
+
+			res.json({ message: "Item deleted successfully" });
+		} catch (error) {
+			console.error("Error deleting item:", error);
+			res.status(500).json({ error: error.message });
+		}
+	}
 }
 
 module.exports = new ItemController();

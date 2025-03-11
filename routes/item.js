@@ -1,11 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const ItemController = require("../controllers/Item");
+const ItemController = require("../controllers/item");
 
 //prettier-ignore
 router.post("/", ItemController.createItem);
 
 router.get("/", ItemController.getItems);
+
+// Add the new batch update route
+router.patch("/batch", ItemController.updateItemsBatch);
+
+router.delete("/:id", ItemController.deleteItem);
 
 module.exports = router;
 
