@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const twilio = require("twilio");
 
 class OwnerController {
 	async createOwner(req, res) {
@@ -50,6 +51,59 @@ class OwnerController {
 			console.error("Error details:", error);
 			res.status(500).json({
 				error: "Error al buscar el dueño",
+				details: error.message,
+			});
+		}
+	}
+
+	async requestQuotation(req, res) {
+		const { totalItems, totalValue, ownerId, items } = req.body;
+
+		try {
+			// Buscar el owner para obtener más detalles
+
+			// Configurar cliente de Twilio
+			const client = twilio(
+				"AC8cf9c3aeb39c0bcdf7662c5ab9c184a9",
+				"0fa75fd54b349396c5fb3630d0822946"
+			);
+
+			// Crear el mensaje con el detalle de las prendas
+			const itemsList = items
+				.map(
+					(item) =>
+						`${item.name} - ${item.brand || "N/A"} - $${item.price || 0}`
+				)
+				.join("\n");
+
+			const message = `
+🛍️ Nueva Solicitud de Valorización
+
+👤 Cliente: ${ownerId}
+
+📦 Total Items: ${totalItems}
+💰 Valor Total: $${totalValue}
+
+📝 Detalle de prendas:
+${itemsList}
+
+📅 Fecha: ${new Date().toLocaleString()}
+			`;
+
+			// Enviar mensaje de WhatsApp
+			await client.messages.create({
+				body: message,
+				from: "whatsapp:+14155238886",
+				to: "whatsapp:+5491165106333",
+			});
+
+			res.status(200).json({
+				message: "Solicitud de valorización enviada correctamente",
+			});
+		} catch (error) {
+			console.error("Error en la solicitud de valorización:", error);
+			res.status(500).json({
+				error: "Error al procesar la solicitud de valorización",
 				details: error.message,
 			});
 		}
