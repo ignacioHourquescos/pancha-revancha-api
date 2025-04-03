@@ -62,10 +62,10 @@ class OwnerController {
 		try {
 			// Buscar el owner para obtener más detalles
 
-			// Configurar cliente de Twilio
+			// Configurar cliente de Twilio usando variables de entorno
 			const client = twilio(
-				"AC8cf9c3aeb39c0bcdf7662c5ab9c184a9",
-				"0fa75fd54b349396c5fb3630d0822946"
+				process.env.TWILIO_ACCOUNT_SID,
+				process.env.TWILIO_AUTH_TOKEN
 			);
 
 			// Crear el mensaje con el detalle de las prendas
