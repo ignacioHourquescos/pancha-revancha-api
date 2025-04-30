@@ -6,41 +6,55 @@ const {
 const { Boom } = require("@hapi/boom");
 const qrcode = require("qrcode");
 const path = require("path");
+const fs = require("fs").promises;
 
 class BotController {
 	constructor() {
 		this.sock = null;
-		this.authFolder = path.join(__dirname, "../auth");
 		this.qr = null;
 		this.isConnected = false;
+		// En Railway, usar un directorio temporal
+		this.authFolder =
+			process.env.NODE_ENV === "production"
+				? "/tmp/auth_whatsapp"
+				: path.join(__dirname, "../auth");
 		this.initializeWhatsApp();
 	}
 
 	async initializeWhatsApp() {
 		try {
-			// Obtener estado de autenticación
+			// Asegurarse de que el directorio existe
+			await fs.mkdir(this.authFolder, { recursive: true });
+
 			const { state, saveCreds } = await useMultiFileAuthState(this.authFolder);
 
-			// Crear conexión de WhatsApp
 			this.sock = makeWASocket({
 				printQRInTerminal: true,
 				auth: state,
-				qrTimeout: 40000,
+				qrTimeout: 60000,
+				connectTimeoutMs: 60000,
+				defaultQueryTimeoutMs: 60000,
+				// Forzar generación de nuevo QR
+				regenerateQRIntervalMs: 30000,
 			});
 
-			// Manejar actualizaciones de conexión
 			this.sock.ev.on("connection.update", async (update) => {
 				const { connection, lastDisconnect, qr } = update;
+				console.log("Connection update:", { connection, qr: !!qr });
 
 				if (qr) {
-					// Convertir QR a imagen base64
-					this.qr = await qrcode.toDataURL(qr);
+					try {
+						this.qr = await qrcode.toDataURL(qr);
+						console.log("Nuevo QR generado");
+					} catch (err) {
+						console.error("Error generando QR:", err);
+					}
 				}
 
 				if (connection === "open") {
 					this.isConnected = true;
 					this.qr = null;
-					console.log("Conectado exitosamente!");
+					console.log("WhatsApp conectado!");
 				}
 
 				if (connection === "close") {
@@ -49,17 +63,13 @@ class BotController {
 						(lastDisconnect?.error instanceof Boom)?.output?.statusCode !==
 						DisconnectReason.loggedOut;
 
-					console.log("Conexión cerrada debido a:", lastDisconnect?.error);
-
 					if (shouldReconnect) {
-						await this.initializeWhatsApp();
+						console.log("Reconectando WhatsApp...");
+						setTimeout(() => this.initializeWhatsApp(), 5000);
 					}
 				}
-
-				console.log("Estado de conexión:", connection);
 			});
 
-			// Guardar credenciales cuando se actualicen
 			this.sock.ev.on("creds.update", saveCreds);
 
 			// Manejar mensajes entrantes
@@ -85,7 +95,10 @@ class BotController {
 				}
 			});
 		} catch (error) {
-			console.error("Error al inicializar WhatsApp:", error);
+			console.error("Error inicializando WhatsApp:", error);
+			this.isConnected = false;
+			// Reintentar en caso de error
+			setTimeout(() => this.initializeWhatsApp(), 5000);
 		}
 	}
 
@@ -118,11 +131,48 @@ class BotController {
 	}
 
 	// Método para obtener el estado actual del QR y la conexión
-	getConnectionStatus() {
-		return {
-			isConnected: this.isConnected,
-			qr: this.qr,
-		};
+	async getStatus(req, res) {
+		try {
+			const status = {
+				isConnected: this.isConnected,
+				qr: this.qr,
+				timestamp: new Date().toISOString(),
+				environment: process.env.NODE_ENV,
+				authPath: this.authFolder,
+			};
+
+			console.log("Status request:", status);
+
+			res.json(status);
+		} catch (error) {
+			console.error("Error en getStatus:", error);
+			res.status(500).json({
+				error: "Error al obtener estado",
+				details: error.message,
+			});
+		}
+	}
+
+	async resetConnection(req, res) {
+		try {
+			// Limpiar directorio de auth
+			await fs.rm(this.authFolder, { recursive: true, force: true });
+
+			// Reiniciar conexión
+			await this.initializeWhatsApp();
+
+			res.json({
+				success: true,
+				message: "Conexión reiniciada",
+				timestamp: new Date().toISOString(),
+			});
+		} catch (error) {
+			console.error("Error en resetConnection:", error);
+			res.status(500).json({
+				error: "Error al reiniciar conexión",
+				details: error.message,
+			});
+		}
 	}
 }
 
