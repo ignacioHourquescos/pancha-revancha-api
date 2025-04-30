@@ -1,6 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const twilio = require("twilio");
+require("dotenv").config();
 
 class OwnerController {
 	async createOwner(req, res) {
