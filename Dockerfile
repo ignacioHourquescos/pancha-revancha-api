@@ -1,21 +1,21 @@
-FROM node:18-alpine
+FROM node:18
 
 WORKDIR /app
-
-# Instalar dependencias del sistema necesarias
-RUN apk add --no-cache python3 make g++ gcc
 
 # Copiar package.json y package-lock.json
 COPY package*.json ./
 
-# Instalar dependencias con flags específicos para evitar errores
-RUN npm ci --legacy-peer-deps --production
+# Instalar dependencias
+RUN npm install --force
 
 # Copiar el resto de los archivos
 COPY . .
 
-# Exponer el puerto
-EXPOSE 4000
+# Generar Prisma Client
+RUN npx prisma generate
+
+# Exponer el puerto que Railway usará
+EXPOSE ${PORT}
 
 # Comando para iniciar la aplicación
 CMD ["npm", "start"] 
