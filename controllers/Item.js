@@ -4,6 +4,7 @@ const { createClient } = require("@supabase/supabase-js");
 const axios = require("axios");
 
 const multer = require("multer");
+const { compressImage } = require("./Image");
 
 const supabase = createClient(
 	process.env.SUPABASE_URL,
@@ -307,6 +308,116 @@ class ItemController {
 			res.status(500).json({
 				error: "Error al obtener el producto",
 				details: error.message,
+			});
+		}
+	}
+
+	async compressItemImage(req, res) {
+		console.log("me llega imagen para comprimir");
+		try {
+			const { imageUrl, itemId } = req.body;
+
+			if (!imageUrl || !itemId) {
+				return res
+					.status(400)
+					.json({ error: "Se requieren URL de imagen e ID del item" });
+			}
+
+			// Verificar que la URL es válida
+			if (!imageUrl.match(/\.(jpg|jpeg|png|webp)$/i)) {
+				return res.status(400).json({ error: "URL de imagen no válida" });
+			}
+
+			// Obtener la imagen original con headers apropiados
+			const response = await axios({
+				url: imageUrl,
+				responseType: "arraybuffer",
+				headers: {
+					Accept: "image/*",
+					"User-Agent":
+						"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+				},
+				validateStatus: function (status) {
+					return status >= 200 && status < 300; // Solo aceptar respuestas exitosas
+				},
+			});
+
+			// Verificar el Content-Type
+			const contentType = response.headers["content-type"];
+			if (!contentType || !contentType.startsWith("image/")) {
+				throw new Error("La URL no corresponde a una imagen válida");
+			}
+
+			const originalSizeKB = (response.data.length / 1024).toFixed(2);
+
+			// Comprimir la imagen
+			const compressedImageBuffer = await compressImage(imageUrl);
+			const compressedSizeKB = (compressedImageBuffer.length / 1024).toFixed(2);
+
+			// Calcular el porcentaje de reducción
+			const reductionPercentage = (
+				((response.data.length - compressedImageBuffer.length) /
+					response.data.length) *
+				100
+			).toFixed(2);
+
+			// Subir la imagen comprimida a Supabase
+			const fileName = `compressed_${Date.now()}.jpg`;
+			const { data: uploadData, error: uploadError } = await supabase.storage
+				.from("items")
+				.upload(fileName, compressedImageBuffer, {
+					contentType: "image/jpeg",
+					cacheControl: "3600",
+					upsert: false,
+				});
+
+			if (uploadError)
+				throw new Error(`Error uploading to Supabase: ${uploadError.message}`);
+
+			// Obtener la URL pública de la imagen
+			const {
+				data: { publicUrl },
+			} = supabase.storage.from("items").getPublicUrl(fileName);
+
+			// Obtener el item actual para acceder a sus imageUrls
+			const item = await prisma.item.findUnique({
+				where: { id: parseInt(itemId) },
+			});
+
+			if (!item) {
+				throw new Error("Item no encontrado");
+			}
+
+			// Actualizar el item con la nueva URL
+			const updatedItem = await prisma.item.update({
+				where: { id: parseInt(itemId) },
+				data: {
+					imageUrls: [...(item.imageUrls || []), publicUrl],
+				},
+			});
+
+			res.json({
+				success: true,
+				compressedImage: `data:image/jpeg;base64,${compressedImageBuffer.toString(
+					"base64"
+				)}`,
+				originalSize: originalSizeKB,
+				compressedSize: compressedSizeKB,
+				reductionPercentage,
+				sizeUnit: "KB",
+				newImageUrl: publicUrl,
+				updatedImageUrls: updatedItem.imageUrls,
+			});
+
+			console.log(`Tamaño original: ${originalSizeKB}KB`);
+			console.log(`Tamaño comprimido: ${compressedSizeKB}KB`);
+			console.log(`Reducción: ${reductionPercentage}%`);
+			console.log(`Nueva URL: ${publicUrl}`);
+		} catch (error) {
+			console.error("Error en compressItemImage:", error);
+			res.status(500).json({
+				error: "Error al comprimir la imagen",
+				details: error.response?.data || error.message,
 			});
 		}
 	}

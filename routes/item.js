@@ -18,6 +18,9 @@ router.post("/:itemId/post-to-instagram", ItemController.postToInstagram);
 // Add this new route
 router.get("/instagram/auth", ItemController.getInstagramAuthUrl);
 
+// Agregar la nueva ruta para comprimir imagen
+router.post("/compress-image", ItemController.compressItemImage);
+
 module.exports = router;
 
 //randomn text for redeploy
