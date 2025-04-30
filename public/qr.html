@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>WhatsApp QR Code</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f0f2f5;
+      font-family: Arial, sans-serif;
+    }
+
+    #qrcode {
+      max-width: 300px;
+      margin: 20px;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .status {
+      margin: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .connected {
+      background-color: #25D366;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="qrcode">Esperando QR...</div>
+  <div id="status" class="status">Iniciando...</div>
+
+  <script>
+    function checkStatus() {
+      fetch('/bot/status')
+        .then(response => response.json())
+        .then(data => {
+          const qrDiv = document.getElementById('qrcode');
+          const statusDiv = document.getElementById('status');
+
+          if (data.isConnected) {
+            qrDiv.innerHTML = '<h2>¡Dispositivo Conectado!</h2>';
+            statusDiv.innerHTML = '¡Conectado!';
+            statusDiv.classList.add('connected');
+          } else if (data.qr) {
+            qrDiv.innerHTML = `<img src="${data.qr}" alt="QR Code">`;
+            statusDiv.innerHTML = 'Esperando conexión...';
+            statusDiv.classList.remove('connected');
+          } else {
+            qrDiv.innerHTML = 'Generando QR...';
+            statusDiv.innerHTML = 'Iniciando...';
+            statusDiv.classList.remove('connected');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          document.getElementById('status').innerHTML = 'Error al conectar con el servidor';
+        });
+    }
+
+    // Verificar estado cada 5 segundos
+    setInterval(checkStatus, 5000);
+    checkStatus(); // Verificar inmediatamente al cargar
+  </script>
+</body>
+
+</html>
