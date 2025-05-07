@@ -138,6 +138,68 @@ class OwnerController {
 		}
 	}
 
+	async partnerLogin(req, res) {
+		const { phoneNumber } = req.body;
+
+		try {
+			// Usar el método existente para buscar el owner
+			const owner = await prisma.owner.findFirst({
+				where: {
+					phoneNumber: phoneNumber,
+				},
+			});
+
+			if (!owner) {
+				return res.status(401).json({
+					success: false,
+					message: "Usuario no encontrado",
+				});
+			}
+
+			// Si el usuario existe, devolver la información necesaria
+			return res.status(200).json({
+				success: true,
+				message: "Login exitoso",
+				owner: {
+					id: owner.id,
+					name: owner.name,
+					phoneNumber: owner.phoneNumber,
+				},
+			});
+		} catch (error) {
+			console.error("Error en login:", error);
+			res.status(500).json({
+				success: false,
+				error: "Error en el proceso de login",
+				details: error.message,
+			});
+		}
+	}
+
+	async getItemsCount(req, res) {
+		const { ownerId } = req.params;
+
+		try {
+			const itemCount = await prisma.item.count({
+				where: {
+					ownerId: parseInt(ownerId),
+				},
+			});
+
+			return res.status(200).json({
+				success: true,
+				count: itemCount,
+			});
+		} catch (error) {
+			console.error("Error al obtener cantidad de items:", error);
+			res.status(500).json({
+				success: false,
+				error: "Error al obtener cantidad de items",
+				details: error.message,
+			});
+		}
+	}
+
 	// Add other owner-related methods here
 }
 
