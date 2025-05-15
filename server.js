@@ -32,5 +32,5 @@ app.get("/qr", (req, res) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-	console.log(`Servidor coorriendo en http://localhost:${PORT}`);
+	console.log(`Servidor coorrriendo en http://localhost:${PORT}`);
 });
