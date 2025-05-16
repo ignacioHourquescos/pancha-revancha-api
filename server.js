@@ -1,7 +1,4 @@
 const express = require("express");
-const itemRoutes = require("./routes/item");
-const ownerRoutes = require("./routes/owner");
-const instagramRoutes = require("./routes/instagram");
 const botRoutes = require("./routes/bot");
 const xmlparser = require("express-xml-bodyparser");
 const cors = require("cors");
@@ -17,11 +14,6 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(logger);
 
-// Use route files
-
-app.use("/items", itemRoutes);
-app.use("/owners", ownerRoutes);
-app.use("/instagram", instagramRoutes);
 app.use("/bot", botRoutes);
 app.use(express.static(path.join(__dirname, "public")));
 

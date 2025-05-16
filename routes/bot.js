@@ -19,14 +19,5 @@ router.post("/send", async (req, res) => {
 // Ruta para obtener el estado de conexión y QR
 router.get("/status", (req, res) => BotController.getStatus(req, res));
 router.post("/reset", (req, res) => BotController.resetConnection(req, res));
-router.get("/debug", (req, res) => {
-	res.json({
-		env: process.env.NODE_ENV,
-		authPath: BotController.authFolder,
-		hasQR: !!BotController.qr,
-		isConnected: BotController.isConnected,
-		timestamp: new Date().toISOString(),
-	});
-});
 
 module.exports = router;
